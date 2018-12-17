@@ -3,7 +3,7 @@ const cheerio = require("cheerio");
 const filterChapters = html => {
   let $ = cheerio.load(html);
   let chapters = $(".chapter");
-  let chaptersData = [];
+  let courseData = [];
   chapters.each((index, item) => {
     let title = $(item)
       .find("h3")
@@ -18,19 +18,29 @@ const filterChapters = html => {
       .find(".video")
       .children("li")
       .each((index, obj) => {
-        videos.push(
-          $(obj)
+        videos.push({
+          id: $(obj).attr("data-media-id"),
+          text: $(obj)
             .text()
             .trim()
-        );
+        });
       });
-    chaptersData.push({
+    courseData.push({
       title: title,
       description: description,
       videos: videos
     });
   });
-  return chaptersData;
+  return courseData;
+};
+const printCourseData = courseInfo => {
+  courseInfo.forEach(item => {
+    console.log(`${item.title}\n`);
+    console.log(`* ${item.description}\n`);
+    item.videos.forEach(obj => {
+      console.log(`【${obj.id}】：${obj.text}\n`);
+    });
+  });
 };
 http
   .get("http://www.imooc.com/learn/766", res => {
@@ -39,8 +49,8 @@ http
       html += chunk;
     });
     res.on("end", () => {
-      let result = filterChapters(html);
-      console.log(result);
+      let courseInfo = filterChapters(html);
+      printCourseData(courseInfo);
     });
   })
   .on("error", e => {
